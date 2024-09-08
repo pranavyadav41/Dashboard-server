@@ -3,17 +3,63 @@ const mongoose = require('mongoose');
 const employeeSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Please add a name'],
-    trim: true
+    required: true,
+    trim: true,
   },
-  age: {
+  dob: {
+    type: Date,
+    required: true,
+  },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other'],
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  phone: {
+    type: String,
+    required: true,
+  },
+  employementType: {
+    type: String,
+    enum: ['full-time', 'part-time', 'intern', 'contract'],
+    required: true,
+  },
+  department: {
+    type: String,
+    required: true,
+  },
+  jobTitle: {
+    type: String,
+    required: true,
+  },
+  salary: {
     type: Number,
-    required: [true, 'Please add an age'],
-    min: [18, 'Age must be at least 18'],
-    max: [100, 'Age must be less than 100']
-  }
+    required: true,
+    min: 0,
+  },
+  address: {
+    type: String,
+    required: true,
+  },
+  skills: {
+    type: [String],
+    required: true,
+  },
+  educationLevel: {
+    type: String,
+    enum: ['highSchool', 'associate', 'bachelor', 'master', 'doctorate', 'other'],
+    required: true,
+  },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
-module.exports = mongoose.model('Employee', employeeSchema);
+const Employee = mongoose.model('Employee', employeeSchema);
+
+module.exports = Employee;
