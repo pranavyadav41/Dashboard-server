@@ -3,6 +3,7 @@ const dotenv = require('dotenv')
 dotenv.config()
 const connectDB = require('./config/database')
 const cors = require('cors')
+const morgan =require('morgan')
 const { errorHandler } = require('./middlewares/errorHandle');
 
 const app = express();
@@ -19,6 +20,8 @@ app.use(cors({
 app.use(express.json())
 
 const PORT = process.env.PORT || 5000;
+
+app.use(morgan('dev'))
 
 app.use('/api/employee', require('./routes/userRoute'));
 app.use(errorHandler);

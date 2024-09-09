@@ -89,16 +89,89 @@ const addEmployee = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get all employees
+// @desc    Get all employees with search, filter, and pagination
 
 const getEmployees = asyncHandler(async (req, res) => {
-  const employees = await Employee.find({});
+  const { search, departments, roles, page = 1, limit = 5 } = req.query;
+  const skip = (page - 1) * limit;
 
-  if (employees) {
-    return res.status(200).json(employees);
-  } else {
-    res.status(404);
-    throw new Error("No employees found");
+  let query = {};
+
+  if (search) {
+    query.$or = [{ name: { $regex: search, $options: "i" } }];
+
+    const [day, month, year] = search.trim().split("/");
+
+    if (
+      year &&
+      month &&
+      day &&
+      year.length === 4 &&
+      month.length >= 1 &&
+      month.length <= 2 &&
+      day.length >= 1 &&
+      day.length <= 2
+    ) {
+      const dayNum = parseInt(day, 10);
+      const monthNum = parseInt(month, 10);
+
+      if (monthNum >= 1 && monthNum <= 12 && dayNum >= 1 && dayNum <= 31) {
+        const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(
+          2,
+          "0"
+        )}T00:00:00.000Z`;
+
+        query.$or.push({
+          dob: formattedDate,
+        });
+      } else {
+        console.log("Invalid day or month provided");
+      }
+    } else {
+      console.log("Invalid date format");
+    }
+  }
+
+
+  if (departments && departments.length > 0) {
+    query.department = { $in: departments.split(",") };
+  }
+
+  if (roles && roles.length > 0) {
+    query.jobTitle = { $in: roles.split(",") };
+  }
+
+  try {
+    if (Object.keys(query).length === 0) {
+      const totalEmployees = await Employee.countDocuments();
+      const employees = await Employee.find()
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean();
+
+      return res.status(200).json({
+        data: employees,
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalEmployees / limit),
+        totalEmployees,
+      });
+    }
+
+    const totalEmployees = await Employee.countDocuments(query);
+    const employees = await Employee.find(query)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    return res.status(200).json({
+      data: employees,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalEmployees / limit),
+      totalEmployees,
+    });
+  } catch (error) {
+    res.status(500);
+    throw new Error("Server error while fetching employees");
   }
 });
 
